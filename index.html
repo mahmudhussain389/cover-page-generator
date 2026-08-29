@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Assignment Cover Page Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Inter:wght@400;500;600;700&family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cloud.umami.is/script.js" data-website-id="a17a139d-ce7b-42a1-98eb-edb12ab983ab"></script>
+<style>
+  :root{
+    --paper:#FFFFFF;
+    --ink:#111111;
+    --ink-soft:#5A5A5A;
+    --line:#DADADA;
+    --accent:#1C64B0;
+    --panel:#ffffff;
+    --bg:#EFECE4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:'Inter','Hind Siliguri',sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+  }
+  .app{
+    display:grid;
+    grid-template-columns: 380px 1fr;
+    min-height:100vh;
+  }
+  header.topbar{
+    grid-column:1 / -1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 20px;
+    background:#1a1a1a;
+    color:#fff;
+  }
+  header.topbar h1{
+    font-size:18px;
+    font-weight:600;
+    margin:0;
+    letter-spacing:.2px;
+  }
+  header.topbar .badge{
+    font-size:11px;
+    color:#b9c9dc;
+    border:1px solid #b9c9dc55;
+    padding:3px 9px;
+    border-radius:20px;
+    letter-spacing:.5px;
+  }
+  .panel{
+    background:var(--panel);
+    border-right:1px solid var(--line);
+    padding:22px 20px 100px;
+    overflow-y:auto;
+  }
+  .field-group{margin-bottom:22px;}
+  .field-group > label.groupTitle{
+    display:block;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:1.2px;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:10px;
+    border-bottom:2px solid #e7eef7;
+    padding-bottom:6px;
+  }
+  .row{margin-bottom:12px;}
+  .row label{
+    display:block;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-bottom:5px;
+    font-weight:500;
+  }
+  .row input[type="text"],
+  .row input[type="date"],
+  .row select,
+  .row textarea{
+    width:100%;
+    font-size:16px;
+    padding:10px 11px;
+    border:1.5px solid var(--line);
+    border-radius:8px;
+    font-family:inherit;
+    color:var(--ink);
+    background:#fdfdfd;
+  }
+  .row textarea{resize:vertical;min-height:56px;line-height:1.4;}
+  .row input:focus, .row select:focus, .row textarea:focus{
+    outline:none;
+    border-color:var(--accent);
+    background:#fff;
+  }
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .swatches{display:flex;gap:10px;flex-wrap:wrap;}
+  .swatch{
+    width:34px;height:34px;border-radius:50%;
+    cursor:pointer;border:2px solid transparent;
+    position:relative;
+  }
+  .swatch.active{border-color:var(--ink);}
+  .swatch.active::after{
+    content:"✓";position:absolute;inset:0;display:flex;
+    align-items:center;justify-content:center;color:#fff;font-size:14px;
+  }
+  .toggle-row{display:flex;gap:8px;}
+  .toggle-btn{
+    flex:1;padding:9px 6px;border:1.5px solid var(--line);
+    border-radius:8px;background:#fdfdfd;cursor:pointer;
+    font-size:13px;font-weight:600;color:var(--ink-soft);
+    transition:.15s;
+  }
+  .toggle-btn.active{
+    background:#1a1a1a;color:#fff;border-color:#1a1a1a;
+  }
+  .file-drop{
+    border:1.5px dashed var(--line);
+    border-radius:8px;
+    padding:14px;
+    text-align:center;
+    font-size:13px;
+    color:var(--ink-soft);
+    background:#fdfdfd;
+    cursor:pointer;
+    display:block;
+  }
+  .file-drop input{display:none;}
+  .logo-actions{display:flex;gap:8px;margin-top:8px;align-items:center;}
+  .logo-actions button{
+    font-size:12px;padding:6px 10px;border-radius:6px;border:1px solid var(--line);
+    background:#fff;cursor:pointer;color:var(--ink-soft);
+  }
+  .previewCol{
+    padding:26px 20px 60px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow:auto;
+  }
+  .previewToolbar{
+    width:100%;
+    max-width:794px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:16px;
+    flex-wrap:wrap;
+    gap:10px;
+  }
+  .previewToolbar .hint{font-size:12.5px;color:var(--ink-soft);}
+  .btnRow{display:flex;gap:10px;}
+  .btn{
+    padding:10px 16px;
+    border-radius:8px;
+    font-size:13.5px;
+    font-weight:600;
+    cursor:pointer;
+    border:none;
+    display:flex;align-items:center;gap:6px;
+  }
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:#154f8c;}
+  .btn-ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink);}
+  .btn:disabled{opacity:.55;cursor:progress;}
+  .stageWrap{
+    width:100%;
+    max-width:794px;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+  }
+  #stage{
+    position:relative;
+    transform-origin:top center;
+  }
+  #a4page{
+    width:794px;
+    height:1123px;
+    background:var(--paper);
+    box-shadow:0 10px 40px rgba(0,0,0,.18);
+    position:relative;
+    padding:76px 76px 76px 128px;
+    display:flex;
+    flex-direction:column;
+    font-family:'Times New Roman','Noto Serif Bengali',serif;
+  }
+  #a4page.sans{font-family:'Inter','Hind Siliguri',sans-serif;}
+  .cp-header{text-align:center;}
+  .cp-deptname{
+    font-size:30px;font-weight:700;color:var(--accent);line-height:1.3;
+  }
+  .cp-uniname{
+    font-size:23px;font-weight:400;color:var(--ink);line-height:1.35;margin-top:2px;
+  }
+  .cp-country{
+    font-size:17px;color:var(--ink);margin-top:2px;
+  }
+  .cp-logoWrap{margin-top:18px;display:flex;justify-content:center;}
+  .cp-logo{
+    width:100px;height:100px;
+    aspect-ratio:1/1;
+    display:flex;align-items:center;justify-content:center;
+    overflow:hidden;
+    border-radius:6px;
+  }
+  .cp-logo img{width:100%;height:100%;object-fit:cover;object-position:center;}
+  .cp-logo.placeholder{
+    border:1.5px dashed var(--line);
+    border-radius:6px;
+    color:#B8B8B8;
+    font-size:12px;
+    font-family:'Inter',sans-serif;
+    text-align:center;
+    padding:6px;
+  }
+  .cp-assign{
+    text-align:center;
+    margin-top:100px;
+    font-size:16px;
+    line-height:1.85;
+  }
+  .cp-assign .lbl{color:var(--accent);font-weight:700;}
+  .cp-assign .val{color:var(--ink);font-weight:700;}
+  .cp-submitWrap{
+    margin-top:auto;
+    padding-top:40px;
+  }
+  .cp-submitTo{
+    text-align:left;
+    font-size:15px;
+    line-height:1.55;
+  }
+  .cp-submitBy{
+    text-align:left;
+    font-size:15px;
+    line-height:1.55;
+    margin-top:56px;
+    margin-left:58%;
+    width:42%;
+  }
+  .cp-submitTo .hdr, .cp-submitBy .hdr{font-weight:700;margin-bottom:2px;}
+  .cp-submitTo .name, .cp-submitBy .name{font-weight:700;}
+  .cp-submitTo .line, .cp-submitBy .line{color:var(--ink);}
+  .cp-submitTo .extra, .cp-submitBy .extra{white-space:pre-line;}
+  .cp-bottom{
+    text-align:center;
+    font-size:15px;
+    font-weight:700;
+    margin-top:56px;
+  }
+  .tabbar{display:none;}
+  @media (max-width: 880px){
+    .app{grid-template-columns:1fr;}
+    .panel{
+      border-right:none;
+      border-bottom:1px solid var(--line);
+      padding-bottom:30px;
+    }
+    .tabbar{
+      display:flex;
+      grid-column:1/-1;
+      background:#1a1a1a;
+      padding:0 14px 12px;
+      gap:8px;
+    }
+    .tabbar button{
+      flex:1;padding:9px 0;border-radius:8px;border:none;
+      background:#ffffff22;color:#eee;font-weight:600;font-size:13.5px;
+      cursor:pointer;
+    }
+    .tabbar button.active{background:#fff;color:var(--ink);}
+    .panel, .previewCol{display:none;}
+    .panel.show, .previewCol.show{display:block;}
+    .previewCol.show{display:flex;}
+    .previewToolbar{justify-content:center;}
+  }
+  @media print{
+    header.topbar, .tabbar, .panel, .previewToolbar{display:none !important;}
+    body{margin:0;background:#fff;}
+    .app{display:block !important;}
+    .previewCol{display:block !important;padding:0 !important;overflow:visible !important;align-items:normal !important;}
+    .stageWrap{width:auto !important;max-width:none !important;overflow:visible !important;height:auto !important;display:block !important;}
+    #stage{transform:none !important;width:auto !important;position:static !important;}
+    #a4page{
+      box-shadow:none !important;
+      margin:0 !important;
+      position:static !important;
+    }
+    @page{size:A4;margin:0;}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="topbar">
+    <h1>Cover Page Generator — A4</h1>
+    <span class="badge">Free · No account needed</span>
+  </header>
+
+  <div class="tabbar">
+    <button id="tabEdit" class="active">✏️ Edit</button>
+    <button id="tabPreview">👁️ Preview</button>
+  </div>
+
+  <div class="panel show" id="panel">
+
+    <div class="field-group">
+      <label class="groupTitle">Logo (optional)</label>
+      <label class="file-drop" id="dropZone">
+        📎 Tap to upload your university logo
+        <input type="file" id="logoInput" accept="image/*">
+      </label>
+      <div style="font-size:11.5px;color:var(--ink-soft);margin-top:6px;">Auto-cropped to a square (1:1) around the center of the photo.</div>
+      <div class="logo-actions">
+        <button id="removeLogo" type="button">Remove logo</button>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="groupTitle">Institution details</label>
+      <div class="row">
+        <label>Department / Faculty</label>
+        <input type="text" id="dept" value="Department of Economics">
+      </div>
+      <div class="row">
+        <label>University / Institution name</label>
+        <input type="text" id="university" value="Islamic University">
+      </div>
+      <div class="row">
+        <label>Country</label>
+        <input type="text" id="country" value="Bangladesh">
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="groupTitle">Assignment details</label>
+      <div class="row">
+        <label>Type</label>
+        <select id="docType">
+          <option>Assignment</option>
+          <option>Lab Report</option>
+          <option>Term Paper</option>
+          <option>Project Report</option>
+          <option>Case Study</option>
+          <option>Presentation</option>
+          <option value="__custom">Custom…</option>
+        </select>
+      </div>
+      <div class="row" id="docTypeCustomRow" style="display:none;">
+        <label>Custom type</label>
+        <input type="text" id="docTypeCustom" placeholder="e.g. Field Report">
+      </div>
+      <div class="row">
+        <label>Title / Topic</label>
+        <input type="text" id="title" value="Input-Output Analysis">
+      </div>
+      <div class="two-col">
+        <div class="row">
+          <label>Course name</label>
+          <input type="text" id="courseName" value="Advance Microeconomics">
+        </div>
+        <div class="row">
+          <label>Course code</label>
+          <input type="text" id="courseCode" value="EC-0000">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="groupTitle">Submitted To</label>
+      <div class="row">
+        <label>Name</label>
+        <input type="text" id="toName" value="ABCD">
+      </div>
+      <div class="two-col">
+        <div class="row">
+          <label>Designation</label>
+          <input type="text" id="toDesignation" value="Professor">
+        </div>
+        <div class="row">
+          <label>Department</label>
+          <input type="text" id="toDept" value="Department of Economics">
+        </div>
+      </div>
+      <div class="row">
+        <label>Additional info (optional, one line each)</label>
+        <textarea id="toExtra">Islamic University
+Bangladesh.</textarea>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="groupTitle">Submitted By</label>
+      <div class="row">
+        <label>Name</label>
+        <input type="text" id="fromName" value="Md. Ohiduzzaman">
+      </div>
+      <div class="two-col">
+        <div class="row">
+          <label>Student ID</label>
+          <input type="text" id="fromId" value="00000">
+        </div>
+        <div class="row">
+          <label>Reg. No.</label>
+          <input type="text" id="fromReg" value="000">
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="row">
+          <label>Session / Batch</label>
+          <input type="text" id="fromSemester" value="2020-21 (BSS)">
+        </div>
+        <div class="row">
+          <label>Submission date (dd/mm/yyyy)</label>
+          <input type="text" id="subDate" placeholder="dd/mm/yyyy" inputmode="numeric" maxlength="10">
+        </div>
+      </div>
+      <div class="row">
+        <label>Additional info (optional, one line each)</label>
+        <textarea id="fromExtra">Department of Economics
+Islamic University, Bangladesh.</textarea>
+      </div>
+    </div>
+
+    <div class="field-group">
+      <label class="groupTitle">Design customization</label>
+      <div class="row">
+        <label>Font style</label>
+        <div class="toggle-row">
+          <button type="button" class="toggle-btn active" data-font="serif">Serif (Classic)</button>
+          <button type="button" class="toggle-btn" data-font="sans">Sans (Modern)</button>
+        </div>
+      </div>
+      <div class="row">
+        <label>Accent color (labels only)</label>
+        <div class="swatches" id="swatches">
+          <div class="swatch active" style="background:#1C64B0" data-color="#1C64B0"></div>
+          <div class="swatch" style="background:#8B3A3A" data-color="#8B3A3A"></div>
+          <div class="swatch" style="background:#1F5C4A" data-color="#1F5C4A"></div>
+          <div class="swatch" style="background:#5B3A8B" data-color="#5B3A8B"></div>
+          <div class="swatch" style="background:#111111" data-color="#111111"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="previewCol show" id="previewCol">
+    <div class="previewToolbar">
+      <span class="hint">A4 (210 × 297mm) — preview updates as you type</span>
+      <div class="btnRow">
+        <button class="btn btn-ghost" id="printBtn">🖨️ Print</button>
+        <button class="btn btn-primary" id="pdfBtn">⬇️ Download PDF</button>
+      </div>
+    </div>
+
+    <div class="stageWrap">
+      <div id="stage">
+        <div id="a4page">
+
+          <div class="cp-header">
+            <div class="cp-deptname" id="out-dept">Department of Economics</div>
+            <div class="cp-uniname" id="out-university">Islamic University</div>
+            <div class="cp-country" id="out-country">Bangladesh</div>
+            <div class="cp-logoWrap">
+              <div class="cp-logo placeholder" id="logoBox">Logo</div>
+            </div>
+          </div>
+
+          <div class="cp-assign">
+            <div><span class="lbl" id="out-doctype">Assignment on-</span> <span class="val" id="out-title">Input-Output Analysis</span></div>
+            <div><span class="lbl">Course Name:</span> <span class="val" id="out-courseName">Advance Microeconomics</span></div>
+            <div><span class="lbl">Course Code:</span> <span class="val" id="out-courseCode">EC-0000</span></div>
+          </div>
+
+          <div class="cp-submitWrap">
+            <div class="cp-submitTo">
+              <div class="hdr">Submitted to</div>
+              <div class="name" id="out-toName">ABCD</div>
+              <div class="line" id="out-toDesignation">Professor</div>
+              <div class="line" id="out-toDept">Department of Economics</div>
+              <div class="extra" id="out-toExtra">Islamic University
+Bangladesh.</div>
+            </div>
+            <div class="cp-submitBy">
+              <div class="hdr">Submitted By:</div>
+              <div class="name" id="out-fromName">Md. Ohiduzzaman</div>
+              <div class="line">Student ID: <span id="out-fromId">00000</span></div>
+              <div class="line">Reg. No.: <span id="out-fromReg">000</span></div>
+              <div class="line">Session: <span id="out-fromSemester">2020-21 (BSS)</span></div>
+              <div class="extra" id="out-fromExtra">Department of Economics
+Islamic University, Bangladesh.</div>
+            </div>
+          </div>
+
+          <div class="cp-bottom">Submitted on <span id="out-date">dd/mm/yyyy</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const textIds = ['dept','university','country','courseName','courseCode',
+    'toName','toDesignation','toDept','toExtra',
+    'fromName','fromId','fromReg','fromSemester','fromExtra'];
+
+  const inputs = {};
+  textIds.forEach(id => inputs[id] = document.getElementById(id));
+  const titleInput = document.getElementById('title');
+  const docTypeSel = document.getElementById('docType');
+  const docTypeCustomRow = document.getElementById('docTypeCustomRow');
+  const docTypeCustom = document.getElementById('docTypeCustom');
+  const subDate = document.getElementById('subDate');
+  const a4page = document.getElementById('a4page');
+
+  function pad2(n){ return n.toString().padStart(2,'0'); }
+
+  function syncText(){
+    textIds.forEach(id => {
+      const el = document.getElementById('out-' + id);
+      if(el) el.textContent = inputs[id].value || '';
+    });
+
+    const typeLabel = docTypeSel.value === '__custom'
+      ? (docTypeCustom.value || 'Document')
+      : docTypeSel.value;
+    document.getElementById('out-doctype').textContent = typeLabel + ' on-';
+    document.getElementById('out-title').textContent = titleInput.value || '';
+
+    if(subDate.value){
+      document.getElementById('out-date').textContent = subDate.value;
+    } else {
+      document.getElementById('out-date').textContent = '—';
+    }
+  }
+
+  function formatDateDigits(value){
+    const digits = value.replace(/\D/g,'').slice(0,8);
+    if(digits.length > 4) return digits.slice(0,2) + '/' + digits.slice(2,4) + '/' + digits.slice(4);
+    if(digits.length > 2) return digits.slice(0,2) + '/' + digits.slice(2);
+    return digits;
+  }
+
+  textIds.forEach(id => inputs[id].addEventListener('input', syncText));
+  titleInput.addEventListener('input', syncText);
+  docTypeSel.addEventListener('change', () => {
+    docTypeCustomRow.style.display = docTypeSel.value === '__custom' ? 'block' : 'none';
+    syncText();
+  });
+  docTypeCustom.addEventListener('input', syncText);
+  subDate.addEventListener('input', () => {
+    subDate.value = formatDateDigits(subDate.value);
+    syncText();
+  });
+
+  const today = new Date();
+  subDate.value = pad2(today.getDate()) + '/' + pad2(today.getMonth()+1) + '/' + today.getFullYear();
+
+  const logoInput = document.getElementById('logoInput');
+  const logoBox = document.getElementById('logoBox');
+  const removeLogoBtn = document.getElementById('removeLogo');
+
+  logoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      logoBox.classList.remove('placeholder');
+      logoBox.innerHTML = '<img src="' + ev.target.result + '" alt="logo">';
+    };
+    reader.readAsDataURL(file);
+  });
+  removeLogoBtn.addEventListener('click', () => {
+    logoBox.classList.add('placeholder');
+    logoBox.innerHTML = 'Logo';
+    logoInput.value = '';
+  });
+
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      a4page.classList.toggle('sans', btn.dataset.font === 'sans');
+    });
+  });
+
+  document.querySelectorAll('.swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      document.documentElement.style.setProperty('--accent', sw.dataset.color);
+    });
+  });
+
+  const tabEdit = document.getElementById('tabEdit');
+  const tabPreview = document.getElementById('tabPreview');
+  const panel = document.getElementById('panel');
+  const previewCol = document.getElementById('previewCol');
+
+  tabEdit.addEventListener('click', () => {
+    tabEdit.classList.add('active'); tabPreview.classList.remove('active');
+    panel.classList.add('show'); previewCol.classList.remove('show');
+  });
+  tabPreview.addEventListener('click', () => {
+    tabPreview.classList.add('active'); tabEdit.classList.remove('active');
+    previewCol.classList.add('show'); panel.classList.remove('show');
+  });
+
+  const stage = document.getElementById('stage');
+  const stageWrap = document.querySelector('.stageWrap');
+  function fitStage(){
+    const available = stageWrap.clientWidth;
+    if(available < 10) return; // not laid out yet, skip this pass
+    const scale = Math.min(1, (available - 4) / 794);
+    stage.style.transform = 'scale(' + scale + ')';
+    stage.style.width = '794px';
+    stageWrap.style.height = (1123 * scale) + 'px';
+  }
+  window.addEventListener('resize', fitStage);
+  window.addEventListener('orientationchange', fitStage);
+  window.addEventListener('load', fitStage);
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(fitStage);
+  }
+  // Mobile browsers can settle their layout a beat late (address bar
+  // show/hide, viewport unit changes) without firing a resize event,
+  // so watch the wrapper's actual box size directly as a fallback.
+  if(window.ResizeObserver){
+    new ResizeObserver(fitStage).observe(stageWrap);
+  }
+
+  const pdfBtn = document.getElementById('pdfBtn');
+  pdfBtn.addEventListener('click', async () => {
+    pdfBtn.disabled = true;
+    const original = pdfBtn.textContent;
+    pdfBtn.textContent = 'Generating…';
+    const prevTransform = stage.style.transform;
+    stage.style.transform = 'none';
+    try{
+      const canvas = await html2canvas(a4page, {scale:2, useCORS:true, backgroundColor:'#FFFFFF'});
+      const imgData = canvas.toDataURL('image/jpeg', 0.97);
+      const { jsPDF } = window.jspdf;
+      const pdf = new jsPDF({unit:'mm', format:'a4', orientation:'portrait'});
+      pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+      pdf.save('cover-page.pdf');
+      if(window.umami){ window.umami.track('pdf_download'); }
+    } catch(err){
+      alert('Sorry, something went wrong generating the PDF. Please try again, or use the Print option instead.');
+      console.error(err);
+    } finally {
+      stage.style.transform = prevTransform;
+      pdfBtn.disabled = false;
+      pdfBtn.textContent = original;
+    }
+  });
+
+  document.getElementById('printBtn').addEventListener('click', () => {
+    if(window.umami){ window.umami.track('print_clicked'); }
+    window.print();
+  });
+
+  // ---------- Hide anything Netlify (or any host) injects outside our app
+  // wrapper — e.g. the free-tier "Powered by Netlify" badge — while printing.
+  const appRoot = document.querySelector('.app');
+  function hideForeignBadges(){
+    Array.from(document.body.children).forEach(el => {
+      if(el !== appRoot){
+        el.dataset.prevDisplay = el.style.display;
+        el.style.setProperty('display','none','important');
+      }
+    });
+  }
+  function restoreForeignBadges(){
+    Array.from(document.body.children).forEach(el => {
+      if(el !== appRoot){
+        el.style.display = el.dataset.prevDisplay || '';
+      }
+    });
+  }
+  window.addEventListener('beforeprint', hideForeignBadges);
+  window.addEventListener('afterprint', restoreForeignBadges);
+
+  // ---------- Select existing text on focus, so typing replaces it without manual deletion ----------
+  document.querySelectorAll('.panel input[type="text"], .panel textarea').forEach(el => {
+    el.addEventListener('focus', () => el.select());
+  });
+
+  syncText();
+  fitStage();
+  setTimeout(fitStage, 300);
+  setTimeout(fitStage, 1000); // final safety pass for slow mobile layout
+</script>
+
+</body>
+</html>
